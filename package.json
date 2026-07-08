@@ -1,0 +1,36 @@
+{
+  "name": "basamake-vscode",
+  "displayName": "Basamake",
+  "description": "Basamake language server for Scala",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": { "vscode": "^1.85.0" },
+  "activationEvents": ["onLanguage:scala"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "scala",
+        "aliases": ["Scala", "scala"],
+        "extensions": [".scala", ".sbt"],
+        "configuration": "./scala-language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "Basamake",
+      "properties": {
+        "basamake.jarPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to basamake fat JAR. Leave empty to use bundled JAR."
+        },
+        "basamake.jvmArgs": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" },
+          "description": "Extra JVM args for the server."
+        }
+      }
+    }
+  }
+}
