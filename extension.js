@@ -5,6 +5,10 @@ const lc = require("vscode-languageclient/node");
 
 let client;
 
+// TODO download basamake.jar if not present (from gh releases), or if version is outdated
+// TODO cache versioned basamake.jars globally
+// TODO configurable version of basamake.jar, default to latest tag
+
 /** Called when extension activates. */
 async function activate(context) {
   const config = vscode.workspace.getConfiguration("basamake");
