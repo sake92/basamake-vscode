@@ -7,6 +7,12 @@
   "engines": { "vscode": "^1.85.0" },
   "activationEvents": ["onLanguage:scala"],
   "main": "./extension.js",
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  },
   "contributes": {
     "languages": [
       {

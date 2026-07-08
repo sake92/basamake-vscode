@@ -41,9 +41,9 @@ async function activate(context) {
     clientOptions
   );
 
-  context.subscriptions.push(client.start());
+  await client.start();
+  context.subscriptions.push(client);
 
-  await client.onReady();
   vscode.window.showInformationMessage("Basamake started");
 }
 
