@@ -2,16 +2,21 @@
   "name": "basamake-vscode",
   "displayName": "Basamake",
   "description": "Basamake language server for Scala",
+  "repository": "https://github.com/sake92/basamake-vscode",
   "version": "0.1.0",
   "publisher": "local",
   "engines": { "vscode": "^1.85.0" },
   "activationEvents": ["onLanguage:scala"],
+  "scripts": {
+    "package": "vsce package"
+  },
   "main": "./extension.js",
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0"
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.6.2"
   },
   "contributes": {
     "languages": [
