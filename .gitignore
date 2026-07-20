@@ -141,3 +141,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Basamake jar (downloaded from releases, not bundled)
+basamake.jar
+
+# Git worktrees
+.worktrees/
