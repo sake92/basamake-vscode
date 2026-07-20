@@ -2,24 +2,22 @@
 
 const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
+const { resolveJarPath } = require("./src/download");
 
 let client;
 let serverProcess;
 
-// TODO download basamake.jar if not present (from gh releases), or if version is outdated
-// TODO cache versioned basamake.jars globally
-// TODO configurable version of basamake.jar, default to latest tag
-
 /** Called when extension activates. */
 async function activate(context) {
-  const config = vscode.workspace.getConfiguration("basamake");
-  let jarPath = config.get("jarPath", "");
-
-  if (!jarPath) {
-    // Look next to extension
-    jarPath = context.asAbsolutePath("basamake.jar");
+  let jarPath;
+  try {
+    jarPath = await resolveJarPath(context);
+  } catch (err) {
+    vscode.window.showErrorMessage(err.message);
+    return; // do not start server
   }
 
+  const config = vscode.workspace.getConfiguration("basamake");
   const jvmArgs = config.get("jvmArgs", []);
 
   const serverOptions = {
