@@ -1,6 +1,7 @@
 "use strict";
 
 const https = require("node:https");
+const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const vscode = require("vscode");
@@ -133,28 +134,75 @@ async function downloadJar(context, version) {
 }
 
 /**
+ * HTTP GET that follows redirects and returns the response stream.
+ * Throws on non-2xx status after exhausting redirects.
+ * @param {string} url
+ * @param {object} [options] - Optional headers
+ * @param {number} [maxRedirects]
+ */
+function httpsGetResponse(url, options, maxRedirects) {
+  let redirectsLeft = maxRedirects == null ? 5 : maxRedirects;
+  const headers = Object.assign(
+    { "User-Agent": "basamake-vscode" },
+    options?.headers
+  );
+
+  return new Promise((resolve, reject) => {
+    function doRequest(currentUrl) {
+      const parsed = new URL(currentUrl);
+      const client = parsed.protocol === "https:" ? https : http;
+
+      client
+        .get(currentUrl, { headers }, (res) => {
+            if ([301, 302, 307, 308].includes(res.statusCode)) {
+              if (redirectsLeft <= 0) {
+                res.resume();
+                reject(
+                  new Error("Basamake: too many redirects during download")
+                );
+                return;
+              }
+              redirectsLeft--;
+              res.resume();
+              const location = res.headers.location;
+              doRequest(new URL(location, currentUrl).href);
+              return;
+            }
+
+            if (res.statusCode !== 200) {
+              res.resume();
+              reject(
+                new Error(
+                  `Basamake: server responded with status ${res.statusCode}`
+                )
+              );
+              return;
+            }
+            resolve(res);
+          }
+        )
+        .on("error", (e) =>
+          reject(new Error(`Basamake: request failed — ${e.message}`))
+        );
+    }
+
+    doRequest(url);
+  });
+}
+
+/**
  * HTTP GET that collects response as string (text mode).
  */
 function httpsGet(url, options) {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, options, (res) => {
-        if (res.statusCode !== 200) {
-          res.resume(); // drain response to free memory
-          reject(
-            new Error(
-              `Basamake: GitHub API responded with status ${res.statusCode}`
-            )
-          );
-          return;
-        }
+    httpsGetResponse(url, options)
+      .then((res) => {
         let body = "";
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => resolve(body));
+        res.on("error", (e) => reject(e));
       })
-      .on("error", (e) =>
-        reject(new Error(`Basamake: GitHub API request failed — ${e.message}`))
-      );
+      .catch(reject);
   });
 }
 
@@ -163,34 +211,28 @@ function httpsGet(url, options) {
  */
 function httpsGetBuffer(url, destPath) {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(destPath);
-    https
-      .get(url, { headers: { "User-Agent": "basamake-vscode" } }, (res) => {
-        if (res.statusCode !== 200) {
-          res.resume();
-          file.close();
-          fs.unlinkSync(destPath);
-          reject(
-            new Error(
-              `Basamake: download failed — server responded with status ${res.statusCode}`
-            )
-          );
-          return;
-        }
+    httpsGetResponse(url)
+      .then((res) => {
+        const file = fs.createWriteStream(destPath);
         res.pipe(file);
         file.on("finish", () => {
           file.close();
           resolve();
         });
+        file.on("error", (e) => {
+          file.close();
+          try {
+            fs.unlinkSync(destPath);
+          } catch (_) {}
+          reject(new Error(`Basamake: download failed — ${e.message}`));
+        });
       })
-      .on("error", (e) => {
-        file.close();
+      .catch((e) => {
+        // Clean up partial file on redirect/network failure
         try {
           fs.unlinkSync(destPath);
         } catch (_) {}
-        reject(
-          new Error(`Basamake: download failed — ${e.message}`)
-        );
+        reject(e);
       });
   });
 }
