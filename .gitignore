@@ -147,3 +147,6 @@ basamake.jar
 
 # Git worktrees
 .worktrees/
+
+# ai
+docs/superpowers
