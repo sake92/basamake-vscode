@@ -152,5 +152,5 @@ basamake.jar
 docs/superpowers
 
 # development
-.vsix
+*.vsix
 
