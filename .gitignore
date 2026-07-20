@@ -150,3 +150,7 @@ basamake.jar
 
 # ai
 docs/superpowers
+
+# development
+.vsix
+
