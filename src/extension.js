@@ -2,7 +2,7 @@
 
 const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
-const { resolveJarPath } = require("./src/download");
+const { resolveJarPath } = require("./download");
 
 let client;
 let serverProcess;

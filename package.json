@@ -9,7 +9,7 @@
   "scripts": {
     "package": "vsce package"
   },
-  "main": "./extension.js",
+  "main": "./src/extension.js",
   "activationEvents": ["onLanguage:scala", "onLanguage:java"],
   "extensionDependencies": ["scala-lang.scala"],
   "dependencies": {
