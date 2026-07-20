@@ -3,5 +3,11 @@
 .gitignore
 .github/**
 *.vsix
+
+readme.md
 TODO.md
 basamake.jar
+
+# ai
+.worktrees/
+docs/
