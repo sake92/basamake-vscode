@@ -33,7 +33,12 @@
         "basamake.jarPath": {
           "type": "string",
           "default": "",
-          "description": "Path to basamake fat JAR. Leave empty to use bundled JAR."
+          "description": "Path to basamake fat JAR. If set, overrides download mechanism."
+        },
+        "basamake.serverVersion": {
+          "type": "string",
+          "default": "latest",
+          "description": "Basamake version to download from GitHub releases. Use 'latest' to auto-resolve, or pin to a tag like 'v0.1.0'. Ignored when basamake.jarPath is set."
         },
         "basamake.jvmArgs": {
           "type": "array",
