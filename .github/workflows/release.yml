@@ -30,7 +30,7 @@ jobs:
             npm version "$TAG_VERSION" --no-git-tag-version --allow-same-version
           else
             SHORT_SHA="${GITHUB_SHA:0:7}"
-            npm version "0.0.0-main.$SHORT_SHA" --no-git-tag-version
+            npm version "0.0.0-main" --no-git-tag-version
           fi
 
       - run: npm run package
@@ -45,6 +45,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           files: '*.vsix'
-          tag_name: main-${{ github.run_number }}
+          tag_name: main
           prerelease: true
           generate_release_notes: true
