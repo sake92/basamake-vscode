@@ -1,2 +1,1 @@
 
-- publish as vsix
