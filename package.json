@@ -10,6 +10,8 @@
     "package": "vsce package"
   },
   "main": "./extension.js",
+  "activationEvents": ["onLanguage:scala", "onLanguage:java"],
+  "extensionDependencies": ["scala-lang.scala"],
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
   },

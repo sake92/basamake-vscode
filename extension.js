@@ -27,9 +27,12 @@ async function activate(context) {
   };
 
   const clientOptions = {
-    documentSelector: [{ scheme: "file", language: "scala" }],
+    documentSelector: [
+      { scheme: "file", language: "scala" },
+      { scheme: "file", language: "java" },
+    ],
     synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/*.scala"),
+      fileEvents: vscode.workspace.createFileSystemWatcher("**/*.{scala,java}"),
     },
   };
 
