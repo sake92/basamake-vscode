@@ -2,7 +2,6 @@
 .git/**
 .gitignore
 .github/**
-node_modules/**
 *.vsix
 TODO.md
 basamake.jar
