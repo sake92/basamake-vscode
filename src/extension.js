@@ -4,7 +4,9 @@ const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
 const { resolveJarPath } = require("./download");
 
+/** @type {lc.LanguageClient | undefined} */
 let client;
+/** @type {import("child_process").ChildProcess | undefined} */
 let serverProcess;
 
 /** Called when extension activates. */
@@ -47,8 +49,9 @@ async function activate(context) {
   serverProcess = client._serverProcess;
   context.subscriptions.push(client);
 
+  // AI added, no idea if needed
   // Defense-in-depth: kill the server process if this extension is disposed.
-  context.subscriptions.push({
+  /*context.subscriptions.push({
     dispose: () => {
       if (serverProcess && serverProcess.pid) {
         try {
@@ -58,22 +61,21 @@ async function activate(context) {
         }
       }
     },
-  });
+  });*/
 
   vscode.window.showInformationMessage("Basamake started");
 }
 
 /** Called when extension deactivates. */
 async function deactivate() {
-  const proc = client?._serverProcess;
 
-  // Attempt graceful LSP shutdown with a short timeout.
+  // Attempt graceful LSP shutdown
   if (client) {
     try {
       await Promise.race([
         client.stop(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("stop timed out")), 500),
+          setTimeout(() => reject(new Error("client stop timed out")), 1000),
         ),
       ]);
     } catch (_) {
@@ -82,12 +84,24 @@ async function deactivate() {
   }
 
   // Guarantee: kill the JVM process NOW, not seconds from now.
-  if (proc && proc.pid) {
+  if (serverProcess && serverProcess.pid) {
     try {
-      proc.kill("SIGKILL");
+      await Promise.race([
+        serverProcess.kill(), // SIGTERM
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("server process sigterm kill timed out")), 1000),
+        ),
+      ]);
     } catch (_) {
-      // Already dead.
+      // kill() timed out or failed
+      // kill forcefully just in case ..
+      try {
+        serverProcess.kill("SIGKILL");
+      } catch (_) {
+        // Already dead.
+      }
     }
+
   }
 }
 
