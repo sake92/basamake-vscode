@@ -6,7 +6,6 @@
   "version": "0.1.0",
   "publisher": "local",
   "engines": { "vscode": "^1.85.0" },
-  "activationEvents": ["onLanguage:scala"],
   "scripts": {
     "package": "vsce package"
   },
