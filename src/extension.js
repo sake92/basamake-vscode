@@ -1,5 +1,6 @@
 "use strict";
 
+const path = require("node:path");
 const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
 const { resolveJarPath } = require("./download");
@@ -8,6 +9,23 @@ const { resolveJarPath } = require("./download");
 let client;
 /** @type {import("child_process").ChildProcess | undefined} */
 let serverProcess;
+
+/**
+ * Absolute path of the workspace to hand to the basamake server.
+ * Uses the first workspace folder; falls back to the active file's
+ * directory when no folder is open. Returns undefined if neither exists.
+ */
+function getWorkspacePath() {
+  const folders = vscode.workspace.workspaceFolders;
+  if (folders && folders.length > 0) {
+    return folders[0].uri.fsPath;
+  }
+  const activeDoc = vscode.window.activeTextEditor?.document;
+  if (activeDoc && activeDoc.uri.scheme === "file") {
+    return path.dirname(activeDoc.uri.fsPath);
+  }
+  return undefined;
+}
 
 /** Called when extension activates. */
 async function activate(context) {
@@ -22,9 +40,18 @@ async function activate(context) {
   const config = vscode.workspace.getConfiguration("basamake");
   const jvmArgs = config.get("jvmArgs", []);
 
+  // basamake expects --workspace as the first program argument.
+  // Absolute path of the first workspace folder; fall back to the
+  // active file's directory when no folder is open.
+  const workspacePath = getWorkspacePath();
+  const args = [...jvmArgs, "-jar", jarPath];
+  if (workspacePath) {
+    args.push("--workspace", workspacePath);
+  }
+
   const serverOptions = {
     command: "java",
-    args: [...jvmArgs, "-jar", jarPath],
+    args,
     transport: lc.TransportKind.stdio,
   };
 

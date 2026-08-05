@@ -4,7 +4,7 @@
   "description": "Basamake language server for Scala",
   "repository": "https://github.com/sake92/basamake-vscode",
   "version": "0.1.0",
-  "publisher": "local",
+  "publisher": "sake92",
   "engines": { "vscode": "^1.85.0" },
   "scripts": {
     "package": "vsce package"
