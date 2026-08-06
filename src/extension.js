@@ -40,11 +40,17 @@ async function activate(context) {
   const config = vscode.workspace.getConfiguration("basamake");
   const jvmArgs = config.get("jvmArgs", []);
 
+  // lmdbjava (used for the dep/JDK symbol index cache) needs these on JDK 17+.
+  const requiredJvmArgs = [
+    "--add-opens=java.base/java.nio=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+  ];
+
   // basamake expects --workspace as the first program argument.
   // Absolute path of the first workspace folder; fall back to the
   // active file's directory when no folder is open.
   const workspacePath = getWorkspacePath();
-  const args = [...jvmArgs, "-jar", jarPath];
+  const args = [...requiredJvmArgs, ...jvmArgs, "-jar", jarPath];
   if (workspacePath) {
     args.push("--workspace", workspacePath);
   }
