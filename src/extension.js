@@ -38,7 +38,11 @@ async function activate(context) {
   }
 
   const config = vscode.workspace.getConfiguration("basamake");
-  const jvmArgs = config.get("jvmArgs", []);
+  const jvmArgs = config.get("jvmArgs", [
+    "-Xmx1g",
+    "-XX:G1PeriodicGCInterval=60000",
+    "-XX:+G1PeriodicGCInvokesConcurrent",
+  ]);
 
   // lmdbjava (used for the dep/JDK symbol index cache) needs these on JDK 17+.
   const requiredJvmArgs = [
