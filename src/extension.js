@@ -1,5 +1,6 @@
 "use strict";
 
+const fs = require("node:fs");
 const path = require("node:path");
 const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
@@ -9,6 +10,40 @@ const { resolveJarPath } = require("./download");
 let client;
 /** @type {import("child_process").ChildProcess | undefined} */
 let serverProcess;
+
+const JVM_ARGS_FILE_NAME = "jvmargs.txt";
+const JVM_ARGS_DIR_NAME = ".basamake";
+const PID_PLACEHOLDER = "# PID:       <pending>";
+
+/**
+ * Writes the JVM args mirror file `<workspace>/.basamake/jvmargs.txt`.
+ * Java ignores `#` comment lines, so the file doubles as a readable
+ * "which server is this" note: workspace, jar, start time, and PID
+ * (filled in after spawn).
+ * Returns the absolute file path, or undefined if writing failed
+ * (caller then falls back to inline JVM args).
+ */
+function writeJvmArgsFile(workspacePath, jarPath, jvmArgs) {
+  const dir = path.join(workspacePath, JVM_ARGS_DIR_NAME);
+  const file = path.join(dir, JVM_ARGS_FILE_NAME);
+  const lines = [
+    "# basamake-vscode server mirror - safe to delete, regenerated on start",
+    `# Workspace: ${workspacePath}`,
+    `# Server:    ${jarPath}`,
+    `# Started:   ${new Date().toLocaleString()}`,
+    PID_PLACEHOLDER,
+    "# --- JVM args below (informational; edit does nothing) ---",
+    ...jvmArgs,
+    "",
+  ];
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, lines.join("\n"), "utf8");
+    return file;
+  } catch (_) {
+    return undefined;
+  }
+}
 
 /**
  * Absolute path of the workspace to hand to the basamake server.
@@ -54,7 +89,27 @@ async function activate(context) {
   // Absolute path of the first workspace folder; fall back to the
   // active file's directory when no folder is open.
   const workspacePath = getWorkspacePath();
-  const args = [...requiredJvmArgs, ...jvmArgs, "-jar", jarPath];
+  const allJvmArgs = [...requiredJvmArgs, ...jvmArgs];
+
+  // Mirror the JVM args into a workspace file and pass them via
+  // `java @file` so the file can be opened at a glance to see
+  // which server is running here. On failure, fall back to inline args.
+  let jvmArgsFile;
+  if (workspacePath) {
+    jvmArgsFile = writeJvmArgsFile(workspacePath, jarPath, allJvmArgs);
+    if (!jvmArgsFile) {
+      vscode.window.showWarningMessage(
+        "Basamake: could not write .basamake/jvmargs.txt, using inline JVM args."
+      );
+    }
+  }
+
+  let args;
+  if (jvmArgsFile) {
+    args = [`@${jvmArgsFile}`, "-jar", jarPath];
+  } else {
+    args = [...allJvmArgs, "-jar", jarPath];
+  }
   if (workspacePath) {
     args.push("--workspace", workspacePath);
   }
@@ -84,6 +139,25 @@ async function activate(context) {
 
   await client.start();
   serverProcess = client._serverProcess;
+
+  // Fill in the PID of the just-started server (java reads the file
+  // only at launch, so this is safe). Skip silently if the file was
+  // deleted or hand-edited in the meantime.
+  if (jvmArgsFile && serverProcess && serverProcess.pid) {
+    try {
+      const content = fs.readFileSync(jvmArgsFile, "utf8");
+      const updated = content.replace(
+        PID_PLACEHOLDER,
+        `# PID:       ${serverProcess.pid}`
+      );
+      if (updated !== content) {
+        fs.writeFileSync(jvmArgsFile, updated, "utf8");
+      }
+    } catch (_) {
+      // File gone or unreadable - nothing to do.
+    }
+  }
+
   context.subscriptions.push(client);
 
   // AI added, no idea if needed

@@ -145,6 +145,9 @@ vite.config.ts.timestamp-*
 # Basamake jar (downloaded from releases, not bundled)
 basamake.jar
 
+# Basamake server JVM args mirror file (written into user workspaces)
+.basamake/
+
 # Git worktrees
 .worktrees/
 
