@@ -11,3 +11,6 @@ basamake.jar
 # ai
 .worktrees/
 docs/
+
+# tests (run via npm test, not shipped in the vsix)
+test/**

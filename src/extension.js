@@ -5,6 +5,7 @@ const path = require("node:path");
 const vscode = require("vscode");
 const lc = require("vscode-languageclient/node");
 const { resolveJarPath } = require("./download");
+const { resolveJava } = require("./java");
 
 /** @type {lc.LanguageClient | undefined} */
 let client;
@@ -64,6 +65,24 @@ function getWorkspacePath() {
 
 /** Called when extension activates. */
 async function activate(context) {
+  const outputChannel = vscode.window.createOutputChannel("Basamake");
+  context.subscriptions.push(outputChannel);
+
+  // Java first: no point downloading a 60MB jar without a JVM to run it.
+  const config = vscode.workspace.getConfiguration("basamake");
+  const javaHome = config.get("javaHome", "");
+  let java;
+  try {
+    java = await resolveJava({ javaHome });
+  } catch (err) {
+    const pick = await vscode.window.showErrorMessage(err.message, "Open Settings");
+    if (pick === "Open Settings") {
+      await vscode.commands.executeCommand("workbench.action.openSettings", "basamake.javaHome");
+    }
+    return; // do not start server
+  }
+  outputChannel.appendLine(`Using Java: ${java.command} (${java.version}, via ${java.source})`);
+
   let jarPath;
   try {
     jarPath = await resolveJarPath(context);
@@ -72,7 +91,6 @@ async function activate(context) {
     return; // do not start server
   }
 
-  const config = vscode.workspace.getConfiguration("basamake");
   const jvmArgs = config.get("jvmArgs", [
     "-Xmx1g",
     "-XX:G1PeriodicGCInterval=60000",
@@ -115,7 +133,7 @@ async function activate(context) {
   }
 
   const serverOptions = {
-    command: "java",
+    command: java.command,
     args,
     transport: lc.TransportKind.stdio,
   };
@@ -137,7 +155,13 @@ async function activate(context) {
     clientOptions
   );
 
-  await client.start();
+  try {
+    await client.start();
+  } catch (err) {
+    outputChannel.appendLine(`Server start failed: ${err.message}`);
+    vscode.window.showErrorMessage(`Basamake: failed to start the language server — ${err.message}`);
+    return;
+  }
   serverProcess = client._serverProcess;
 
   // Fill in the PID of the just-started server (java reads the file

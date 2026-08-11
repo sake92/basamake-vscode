@@ -7,6 +7,24 @@ and install it in VSCode (extensions -> ... -> Install from VSIX).
 
 You can also use [latest snapshot release](https://github.com/sake92/basamake-vscode/releases#release-main) if you feel brave.
 
+## Requirements
+
+Basamake needs **Java 17+** on your machine.
+
+Java is located in this order:
+
+1. `basamake.javaHome` setting (e.g. `/Users/you/.sdkman/candidates/java/current`)
+2. `java` on `PATH`
+3. `JAVA_HOME`
+4. Common install locations: sdkman, Homebrew (`/opt/homebrew/opt`), macOS
+   system JDKs (`/Library/Java/JavaVirtualMachines`), Linux `/usr/lib/jvm`,
+   Windows Program Files
+
+Note: extensions only see the environment of the process that started VS Code.
+On macOS, launching VS Code from the Dock/Finder does not load `~/.zshrc`, so
+sdkman's `java` is not on `PATH` — either launch from a terminal (`code .`) or
+set `basamake.javaHome`.
+
 ## JVM args mirror file
 
 On server start, the extension writes the JVM args into

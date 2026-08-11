@@ -7,7 +7,8 @@
   "publisher": "sake92",
   "engines": { "vscode": "^1.85.0" },
   "scripts": {
-    "package": "vsce package"
+    "package": "vsce package",
+    "test": "node --test"
   },
   "main": "./src/extension.js",
   "activationEvents": ["onLanguage:scala", "onLanguage:java"],
@@ -35,6 +36,11 @@
           "type": "string",
           "default": "",
           "description": "Path to basamake fat JAR. If set, overrides download mechanism."
+        },
+        "basamake.javaHome": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a JDK home (Java 17+). If empty, Basamake auto-detects: basamake.javaHome > java on PATH > JAVA_HOME > common install locations (sdkman, Homebrew, macOS system JDKs, Linux /usr/lib/jvm, Windows Program Files)."
         },
         "basamake.serverVersion": {
           "type": "string",
